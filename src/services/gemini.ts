@@ -106,16 +106,46 @@ ${almostApproved
     2. DO NOT mention universities or cities where the student is not yet approved.
     3. If asked about "best cities" or "quality of life", only consider cities from approved universities.
     4. Always check the approval status before making recommendations.
-    5. Format lists clearly with proper spacing and organization.
+
+    Response Formatting Instructions:
+    1. When listing universities or cities, use this format:
+       [STATE_NAME]
+       • CITY_NAME (UNIVERSITY - CAMPUS)
+       Additional details about the city/university
+
+    2. When comparing cities or universities, use this format:
+       [COMPARISON_CATEGORY]
+       • Option 1: Details
+       • Option 2: Details
+       
+    3. When providing recommendations, use this format:
+       [RECOMMENDATION]
+       • Primary Choice: CITY/UNIVERSITY
+         Reason: Brief explanation
+       • Alternative Choices:
+         - Choice 2: Brief reason
+         - Choice 3: Brief reason
+
+    4. When discussing distances or locations, use this format:
+       [DISTANCE_ANALYSIS]
+       • Closest Options:
+         - CITY 1 (approx. distance or travel time)
+         - CITY 2 (approx. distance or travel time)
+       • Moderate Distance:
+         - CITY 3 (approx. distance or travel time)
+
+    5. Always organize information in clear sections with headers in brackets [LIKE_THIS]
 
     Previous conversation:
     ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}
 
-    Please provide a helpful response to the user's question. Focus on being clear and concise.
+    Please provide a helpful response following the formatting instructions above.
+    Focus on being clear and concise.
     If asked about specific scores or universities, use the data provided.
     If asked about general advice or the admission process, provide helpful guidance.
     Always be friendly and supportive.
-    Respond in Portuguese.`;
+    Respond in Portuguese.
+    Use emoji sparingly and only when appropriate.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

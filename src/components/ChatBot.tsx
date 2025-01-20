@@ -191,7 +191,7 @@ export function ChatBot({ universities, scores }: ChatBotProps) {
                 <div class="idh-city-name">${cityName}</div>
                 <div class="idh-details">
                   <div class="idh-value">${idh}</div>
-                  <div class="idh-level ${idh >= 0.7 ? 'alto' : 'médio'}">${idh >= 0.7 ? 'Alto' : 'Médio'}</div>
+                  <div class="idh-level ${parseFloat(idh) >= 0.7 ? 'alto' : 'médio'}">${parseFloat(idh) >= 0.7 ? 'Alto' : 'Médio'}</div>
                 </div>
               </div>
             `;
@@ -250,6 +250,103 @@ export function ChatBot({ universities, scores }: ChatBotProps) {
               </div>
             </div>
             <div class="uni-conclusion">Boa sorte!</div>
+          </div>
+        `;
+      }
+    );
+
+    // Format sections with headers
+    formattedContent = formattedContent.replace(
+      /\[([A-Z_]+)\]((?:\n[^[]*(?=\[|$))*)/g,
+      (_, header, content) => `
+        <div class="content-section">
+          <div class="section-header">${header.replace(/_/g, ' ')}</div>
+          <div class="section-content">${content}</div>
+        </div>
+      `
+    );
+
+    // Format bullet points with details
+    formattedContent = formattedContent.replace(
+      /^[•\-]\s*(.+?)(?::\s*|\n\s+)((?:(?!^[•\-]).)*)/gm,
+      (_, title, details) => `
+        <div class="bullet-item">
+          <div class="bullet-title">${title}</div>
+          ${details ? `<div class="bullet-details">${details}</div>` : ''}
+        </div>
+      `
+    );
+
+    // Format state headers
+    formattedContent = formattedContent.replace(
+      /\[([A-Z]+(?:\s+[A-Z]+)*)\]/g,
+      '<div class="state-header">$1</div>'
+    );
+
+    // Format nested items
+    formattedContent = formattedContent.replace(
+      /^(\s*)-\s*(.+?)(?::\s*|\n\s+)((?:(?!^[•\-]).)*)/gm,
+      (_, indent, title, details) => `
+        <div class="nested-item" style="margin-left: ${indent.length * 8}px">
+          <div class="nested-title">${title}</div>
+          ${details ? `<div class="nested-details">${details}</div>` : ''}
+        </div>
+      `
+    );
+
+    // Add styles
+    const additionalStyles = `
+      [&_.content-section]:mb-6 [&_.content-section]:last:mb-0
+      [&_.section-header]:text-lg [&_.section-header]:font-bold [&_.section-header]:text-blue-900 [&_.section-header]:mb-3
+      [&_.section-content]:space-y-2
+      [&_.bullet-item]:bg-white/50 [&_.bullet-item]:p-3 [&_.bullet-item]:rounded-lg [&_.bullet-item]:mb-2
+      [&_.bullet-title]:font-medium [&_.bullet-title]:text-blue-900
+      [&_.bullet-details]:text-blue-800 [&_.bullet-details]:mt-1
+      [&_.state-header]:text-xl [&_.state-header]:font-bold [&_.state-header]:text-blue-900 [&_.state-header]:mt-4 [&_.state-header]:mb-2
+      [&_.nested-item]:bg-white/30 [&_.nested-item]:p-2 [&_.nested-item]:rounded [&_.nested-item]:mb-1
+      [&_.nested-title]:font-medium [&_.nested-title]:text-blue-800
+      [&_.nested-details]:text-blue-700 [&_.nested-details]:text-sm [&_.nested-details]:mt-1
+    `;
+
+    // Format initial approval message
+    formattedContent = formattedContent.replace(
+      /(Bom dia|Olá)![^!]*![^!]*![^:]*:((?:\s*\*[^\n]*\n*)*)((?:Essas|Parabéns)[^!]*!)\s*(.*)/,
+      (_, greeting, universities, congrats, help) => {
+        const formattedUniversities = universities
+          .trim()
+          .split('\n')
+          .map((uni: string) => {
+            const [name, campus] = uni.replace('* ', '').split(' (');
+            return `
+              <div class="university-approval-item">
+                <div class="university-campus">${campus ? `${campus.replace(')', '')}` : ''}</div>
+                <div class="university-name">${name}</div>
+              </div>
+            `;
+          })
+          .join('');
+
+        return `
+          <div class="approval-message">
+            <div class="greeting-section">
+              <div class="greeting-emoji">🎓</div>
+              <div class="greeting-text">
+                <div class="greeting">${greeting}!</div>
+                <div class="approval-count">Você foi aprovado em 16 universidades para Medicina!</div>
+              </div>
+            </div>
+            
+            <div class="universities-section">
+              <div class="universities-intro">Suas aprovações:</div>
+              <div class="universities-grid">
+                ${formattedUniversities}
+              </div>
+            </div>
+            
+            <div class="footer-section">
+              <div class="congrats">${congrats}</div>
+              <div class="help-text">${help}</div>
+            </div>
           </div>
         `;
       }
@@ -314,100 +411,84 @@ export function ChatBot({ universities, scores }: ChatBotProps) {
                 Olá! Eu sou o assistente do SISU. Como posso te ajudar hoje?
               </div>
             )}
-            {messages.map((message, index) => (
+            {messages.map((message: ChatMessage, index: number) => (
               <div
-                key={index}
-                className={`p-3 rounded-lg ${
-                  message.role === 'user'
-                    ? 'bg-blue-500 text-white ml-auto'
-                    : 'bg-gray-100 text-gray-900'
-                } max-w-[80%] ${message.role === 'assistant' ? 'chat-message' : ''}`}
+              key={index}
+              className={`p-3 rounded-lg ${
+                message.role === 'user'
+                ? 'bg-blue-500 text-white ml-auto'
+                : 'bg-gray-100 text-gray-900'
+              } max-w-[80%] ${message.role === 'assistant' ? 'chat-message' : ''}`}
               >
-                {message.role === 'assistant' ? (
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }}
-                    className="[&_.universities-section]:mb-4 
-                      [&_.universities-title]:font-semibold [&_.universities-title]:mb-2 
-                      [&_.universities-list]:space-y-2
-                      [&_.university-item]:p-2 [&_.university-item]:bg-white/50 [&_.university-item]:rounded
-                      [&_.university-name]:font-medium [&_.university-name]:text-blue-900
-                      [&_.university-scores]:text-sm [&_.university-scores]:text-blue-800
-                      [&_.university-item]:hover:bg-white/80 [&_.university-item]:transition-colors
-                      [&_.cities-section]:mb-4
-                      [&_.cities-title]:font-semibold [&_.cities-title]:mb-3
-                      [&_.cities-grid]:grid [&_.cities-grid]:grid-cols-2 [&_.cities-grid]:gap-2
-                      [&_.city-item]:p-2 [&_.city-item]:bg-white/50 [&_.city-item]:rounded [&_.city-item]:flex [&_.city-item]:flex-col
-                      [&_.city-name]:font-medium [&_.city-name]:text-blue-900
-                      [&_.city-university]:text-sm [&_.city-university]:text-blue-800
-                      [&_.city-item]:hover:bg-white/80 [&_.city-item]:transition-colors
-                      [&_.list-item]:mb-3 [&_.list-item]:p-2 [&_.list-item]:bg-white/50 [&_.list-item]:rounded
-                      [&_.list-item-title]:font-semibold [&_.list-item-title]:text-blue-900
-                      [&_.list-item-description]:text-sm [&_.list-item-description]:text-gray-700 [&_.list-item-description]:mt-1
-                      [&_strong]:font-semibold [&_strong]:text-blue-900
-                      [&_.city-recommendations]:mb-4
-                      [&_.recommendations-intro]:font-semibold [&_.recommendations-intro]:mb-2
-                      [&_.recommended-cities-list]:space-y-2
-                      [&_.recommended-city-item]:p-2 [&_.recommended-city-item]:bg-white/50 [&_.recommended-city-item]:rounded
-                      [&_.city-rank]:font-medium [&_.city-rank]:text-blue-900
-                      [&_.city-details]:flex [&_.city-details]:flex-col
-                      [&_.city-name]:font-medium [&_.city-name]:text-blue-900
-                      [&_.city-university]:text-sm [&_.city-university]:text-blue-800
-                      [&_.recommended-city-item]:hover:bg-white/80 [&_.recommended-city-item]:transition-colors
-                      [&_.approval-message]:space-y-8
-                      [&_.greeting-section]:flex [&_.greeting-section]:items-center [&_.greeting-section]:gap-4
-                      [&_.greeting-emoji]:text-4xl
-                      [&_.greeting-text]:space-y-1
-                      [&_.greeting]:text-2xl [&_.greeting]:font-bold [&_.greeting]:text-blue-900
-                      [&_.approval-count]:text-lg [&_.approval-count]:text-blue-800 [&_.approval-count]:font-medium
-                      [&_.universities-section]:space-y-4
-                      [&_.universities-intro]:text-xl [&_.universities-intro]:font-semibold [&_.universities-intro]:text-blue-900
-                      [&_.universities-grid]:grid [&_.universities-grid]:grid-cols-1 [&_.universities-grid]:md:grid-cols-2 [&_.universities-grid]:gap-3
-                      [&_.university-approval-item]:p-4 [&_.university-approval-item]:bg-white/50 [&_.university-approval-item]:rounded-lg 
-                      [&_.university-approval-item]:transition-all [&_.university-approval-item]:space-y-1
-                      [&_.university-approval-item]:hover:bg-white/80 [&_.university-approval-item]:hover:shadow-md [&_.university-approval-item]:hover:scale-[1.02]
-                      [&_.university-name]:font-semibold [&_.university-name]:text-blue-900
-                      [&_.university-campus]:text-sm [&_.university-campus]:text-blue-700 [&_.university-campus]:font-medium
-                      [&_.footer-section]:space-y-2 [&_.footer-section]:border-t [&_.footer-section]:border-blue-100 [&_.footer-section]:pt-4
-                      [&_.congrats]:text-lg [&_.congrats]:font-medium [&_.congrats]:text-blue-900
-                      [&_.help-text]:text-blue-800
-                      [&_.idh-comparison]:space-y-6
-                      [&_.idh-intro]:text-lg [&_.idh-intro]:text-blue-900
-                      [&_.idh-cities-grid]:grid [&_.idh-cities-grid]:grid-cols-1 [&_.idh-cities-grid]:md:grid-cols-2 [&_.idh-cities-grid]:gap-4
-                      [&_.idh-city-item]:bg-white/50 [&_.idh-city-item]:p-4 [&_.idh-city-item]:rounded-lg [&_.idh-city-item]:flex [&_.idh-city-item]:justify-between [&_.idh-city-item]:items-center
-                      [&_.idh-city-name]:font-semibold [&_.idh-city-name]:text-blue-900
-                      [&_.idh-details]:text-right
-                      [&_.idh-value]:font-medium [&_.idh-value]:text-blue-800
-                      [&_.idh-level]:text-sm [&_.idh-level]:px-2 [&_.idh-level]:py-1 [&_.idh-level]:rounded
-                      [&_.idh-level.alto]:bg-green-100 [&_.idh-level.alto]:text-green-800
-                      [&_.idh-level.médio]:bg-yellow-100 [&_.idh-level.médio]:text-yellow-800
-                      [&_.idh-conclusion]:text-lg [&_.idh-conclusion]:font-medium [&_.idh-conclusion]:text-blue-900 [&_.idh-conclusion]:mt-4
-                      [&_.idh-help]:text-blue-800 [&_.idh-help]:mt-2
-                      [&_.university-details]:space-y-8
-                      [&_.uni-header]:space-y-2
-                      [&_.uni-intro]:text-lg [&_.uni-intro]:text-blue-900
-                      [&_.uni-name]:text-xl [&_.uni-name]:font-bold [&_.uni-name]:text-blue-900
-                      [&_.details-section]:grid [&_.details-section]:grid-cols-1 [&_.details-section]:gap-4
-                      [&_.uni-detail-item]:bg-white/50 [&_.uni-detail-item]:p-4 [&_.uni-detail-item]:rounded-lg [&_.uni-detail-item]:space-y-2
-                      [&_.detail-title]:font-semibold [&_.detail-title]:text-blue-900
-                      [&_.detail-content]:text-blue-800
-                      [&_.next-steps-section]:space-y-4 [&_.next-steps-section]:mt-6
-                      [&_.steps-title]:text-lg [&_.steps-title]:font-semibold [&_.steps-title]:text-blue-900
-                      [&_.steps-list]:space-y-3
-                      [&_.next-step-item]:bg-blue-50 [&_.next-step-item]:p-3 [&_.next-step-item]:rounded-lg [&_.next-step-item]:border-l-4 [&_.next-step-item]:border-blue-500
-                      [&_.step-content]:text-blue-800
-                      [&_.uni-conclusion]:text-blue-900 [&_.uni-conclusion]:mt-4"
-                  />
-                ) : (
-                  message.content
-                )}
+              {message.role === 'assistant' ? (
+                <div 
+                dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }}
+                className="[&_.universities-section]:mb-4 
+                  [&_.universities-title]:font-semibold [&_.universities-title]:mb-2 
+                  [&_.universities-list]:space-y-2
+                  [&_.university-item]:p-2 [&_.university-item]:bg-white/50 [&_.university-item]:rounded
+                  [&_.university-name]:font-medium [&_.university-name]:text-blue-900
+                  [&_.university-scores]:text-sm [&_.university-scores]:text-blue-800
+                  [&_.university-item]:hover:bg-white/80 [&_.university-item]:transition-colors
+                  [&_.cities-section]:mb-4
+                  [&_.cities-title]:font-semibold [&_.cities-title]:mb-3
+                  [&_.cities-grid]:grid [&_.cities-grid]:grid-cols-2 [&_.cities-grid]:gap-2
+                  [&_.city-item]:p-2 [&_.city-item]:bg-white/50 [&_.city-item]:rounded [&_.city-item]:flex [&_.city-item]:flex-col
+                  [&_.city-name]:font-medium [&_.city-name]:text-blue-900
+                  [&_.city-university]:text-sm [&_.city-university]:text-blue-800
+                  [&_.city-item]:hover:bg-white/80 [&_.city-item]:transition-colors
+                  [&_.list-item]:mb-3 [&_.list-item]:p-2 [&_.list-item]:bg-white/50 [&_.list-item]:rounded
+                  [&_.list-item-title]:font-semibold [&_.list-item-title]:text-blue-900
+                  [&_.list-item-description]:text-sm [&_.list-item-description]:text-gray-700 [&_.list-item-description]:mt-1
+                  [&_strong]:font-semibold [&_strong]:text-blue-900
+                  [&_.city-recommendations]:mb-4
+                  [&_.recommendations-intro]:font-semibold [&_.recommendations-intro]:mb-2
+                  [&_.recommended-cities-list]:space-y-2
+                  [&_.recommended-city-item]:p-2 [&_.recommended-city-item]:bg-white/50 [&_.recommended-city-item]:rounded
+                  [&_.city-rank]:font-medium [&_.city-rank]:text-blue-900
+                  [&_.city-details]:flex [&_.city-details]:flex-col
+                  [&_.city-name]:font-medium [&_.city-name]:text-blue-900
+                  [&_.city-university]:text-sm [&_.city-university]:text-blue-800
+                  [&_.recommended-city-item]:hover:bg-white/80 [&_.recommended-city-item]:transition-colors
+                  [&_.approval-message]:space-y-8
+                  [&_.greeting-section]:flex [&_.greeting-section]:items-center [&_.greeting-section]:gap-4
+                  [&_.greeting-emoji]:text-4xl
+                  [&_.greeting-text]:space-y-1
+                  [&_.greeting]:text-2xl [&_.greeting]:font-bold [&_.greeting]:text-blue-900
+                  [&_.approval-count]:text-lg [&_.approval-count]:text-blue-800 [&_.approval-count]:font-medium
+                  [&_.universities-section]:space-y-4
+                  [&_.universities-intro]:text-xl [&_.universities-intro]:font-semibold [&_.universities-intro]:text-blue-900
+                  [&_.universities-grid]:grid [&_.universities-grid]:grid-cols-1 [&_.universities-grid]:md:grid-cols-2 [&_.universities-grid]:gap-3
+                  [&_.university-approval-item]:p-4 [&_.university-approval-item]:bg-white/50 [&_.university-approval-item]:rounded-lg 
+                  [&_.university-approval-item]:transition-all [&_.university-approval-item]:space-y-1
+                  [&_.university-approval-item]:hover:bg-white/80 [&_.university-approval-item]:hover:shadow-md [&_.university-approval-item]:hover:scale-[1.02]
+                  [&_.university-name]:font-semibold [&_.university-name]:text-blue-900
+                  [&_.university-campus]:text-sm [&_.university-campus]:text-blue-700 [&_.university-campus]:font-medium
+                  [&_.footer-section]:space-y-2 [&_.footer-section]:border-t [&_.footer-section]:border-blue-100 [&_.footer-section]:pt-4
+                  [&_.congrats]:text-lg [&_.congrats]:font-medium [&_.congrats]:text-blue-900
+                  [&_.help-text]:text-blue-800
+                  [&_.idh-comparison]:space-y-6
+                  [&_.idh-intro]:text-lg [&_.idh-intro]:text-blue-900
+                  [&_.idh-cities-grid]:grid [&_.idh-cities-grid]:grid-cols-1 [&_.idh-cities-grid]:md:grid-cols-2 [&_.idh-cities-grid]:gap-4
+                  [&_.idh-city-item]:bg-white/50 [&_.idh-city-item]:p-4 [&_.idh-city-item]:rounded-lg [&_.idh-city-item]:flex [&_.idh-city-item]:justify-between [&_.idh-city-item]:items-center
+                  [&_.idh-city-name]:font-semibold [&_.idh-city-name]:text-blue-900
+                  [&_.idh-details]:text-right
+                  [&_.idh-value]:font-medium [&_.idh-value]:text-blue-800
+                  [&_.idh-level]:text-sm [&_.idh-level]:px-2 [&_.idh-level]:py-1 [&_.idh-level]:rounded
+                  [&_.idh-level.alto]:bg-green-100 [&_.idh-level.alto]:text-green-800
+                  [&_.idh-level.médio]:bg-yellow-100 [&_.idh-level.médio]:text-yellow-800"
+                />
+              ) : (
+                message.content
+              )}
               </div>
             ))}
             {loading && (
               <div className="bg-gray-100 text-gray-900 p-3 rounded-lg max-w-[80%]">
-                Digitando...
+              Digitando...
               </div>
             )}
-          </div>
+            </div>
 
           <form onSubmit={handleSubmit} className="flex gap-2">
             <input
