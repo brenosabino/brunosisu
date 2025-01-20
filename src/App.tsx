@@ -7,11 +7,11 @@ import { PasswordProtection } from './components/PasswordProtection';
 
 // Type for scores
 type Scores = {
-  linguagens: number;
-  humanas: number;
-  natureza: number;
-  matematica: number;
-  redacao: number;
+  linguagens: number | '';
+  humanas: number | '';
+  natureza: number | '';
+  matematica: number | '';
+  redacao: number | '';
 };
 
 // Get saved scores from localStorage
@@ -25,11 +25,11 @@ const getSavedScores = (): Scores => {
     }
   }
   return {
-    linguagens: 0,
-    humanas: 0,
-    natureza: 0,
-    matematica: 0,
-    redacao: 0
+    linguagens: '',
+    humanas: '',
+    natureza: '',
+    matematica: '',
+    redacao: ''
   };
 };
 
@@ -112,7 +112,7 @@ function App() {
 
   const handleScoreChange = (field: keyof Scores, value: string) => {
     if (value === '') {
-      setScores(prev => ({ ...prev, [field]: 0 }));
+      setScores(prev => ({ ...prev, [field]: '' }));
       return;
     }
     const numValue = Math.min(1000, Math.max(0, Number(value)));
@@ -129,7 +129,7 @@ function App() {
 
   const calculateWeightedScore = (university: UniversityData) => {
     // Check if any score is empty
-    const hasEmptyScores = Object.values(scores).some(score => score === 0);
+    const hasEmptyScores = Object.values(scores).some(score => score === '');
     if (hasEmptyScores) {
       return '-';
     }
@@ -137,11 +137,11 @@ function App() {
     const weightSum = Object.values(university.weight).reduce((a, b) => a + b, 0);
     
     const weightedSum = 
-      scores.linguagens * university.weight.linguagens +
-      scores.humanas * university.weight.humanas +
-      scores.natureza * university.weight.natureza +
-      scores.matematica * university.weight.matematica +
-      scores.redacao * university.weight.redacao;
+      Number(scores.linguagens) * university.weight.linguagens +
+      Number(scores.humanas) * university.weight.humanas +
+      Number(scores.natureza) * university.weight.natureza +
+      Number(scores.matematica) * university.weight.matematica +
+      Number(scores.redacao) * university.weight.redacao;
     
     return (weightedSum / weightSum).toFixed(2);
   };
@@ -227,7 +227,7 @@ function App() {
                     className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="0"
                     max="1000"
-                    placeholder="Digite sua nota"
+                    placeholder="Digite sua nota aqui"
                   />
                 </div>
               ))}
@@ -344,7 +344,10 @@ function App() {
         </section>
       </main>
 
-      <ChatBot universities={universities} scores={scores} />
+      <ChatBot 
+        universities={universities} 
+        scores={Object.values(scores).every(score => score !== '') ? scores as { [K in keyof Scores]: number } : undefined}
+      />
     </div>
   );
 }
