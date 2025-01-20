@@ -181,6 +181,14 @@ function App() {
             <School className="w-8 h-8" />
             <h1 className="text-2xl font-bold">SISU Bruno Medicina</h1>
           </div>
+          {/* <button
+            onClick={refreshData}
+            disabled={refreshing || loading}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-300 rounded-lg transition-colors"
+          >
+            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Atualizando...' : 'Atualizar Dados'}
+          </button> */}
         </div>
       </header>
 
@@ -232,92 +240,93 @@ function App() {
               ))}
             </div>
           </section>
-
-          <section className="mt-8 bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4">Resultado por Universidade</h2>
-            
-            {loading ? (
-              <div className="flex justify-center items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              </div>
-            ) : error ? (
-              <div className="p-6 bg-red-50 text-red-700 rounded flex flex-col items-center">
-                <p className="text-center mb-4">{error}</p>
-                <button
-                  onClick={handleRetry}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Tentar Novamente
-                </button>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Universidade
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Estado
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Cidade
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nota de Corte
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Sua Nota
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Delta
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {sortedUniversities.map((uni) => {
-                      const calculatedScore = calculateWeightedScore(uni);
-                      const passed = calculatedScore !== '-' && Number(calculatedScore) >= uni.minScore;
-                      
-                      return (
-                        <tr key={`${uni.shortName}-${uni.city}`}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="font-medium text-gray-900">{uni.shortName}</div>
-                              <div className="text-sm text-gray-500">{uni.name}</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">{uni.state}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{uni.city}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{uni.minScore.toFixed(2)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{calculatedScore}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {calculatedScore !== '-' ? (
-                              <span className={Number(calculatedScore) >= uni.minScore ? 'text-green-600' : 'text-red-600'}>
-                                {(Number(calculatedScore) - uni.minScore).toFixed(2)}
-                              </span>
-                            ) : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                              ${passed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                              {passed ? 'Aprovado' : 'Reprovado'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
         </div>
+
+        <section className="mt-8 bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4">Resultado por Universidade</h2>
+          
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">Carregando dados do SISU...</span>
+            </div>
+          ) : error ? (
+            <div className="p-6 bg-red-50 text-red-700 rounded flex flex-col items-center">
+              <p className="text-center mb-4">{error}</p>
+              <button
+                onClick={handleRetry}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Tentar Novamente
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Universidade
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cidade
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Nota de Corte
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sua Nota
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Delta
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedUniversities.map((uni) => {
+                    const calculatedScore = calculateWeightedScore(uni);
+                    const passed = calculatedScore !== '-' && Number(calculatedScore) >= uni.minScore;
+                    
+                    return (
+                      <tr key={`${uni.shortName}-${uni.city}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="font-medium text-gray-900">{uni.shortName}</div>
+                            <div className="text-sm text-gray-500">{uni.name}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{uni.state}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{uni.city}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{uni.minScore.toFixed(2)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{calculatedScore}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {calculatedScore !== '-' ? (
+                            <span className={Number(calculatedScore) >= uni.minScore ? 'text-green-600' : 'text-red-600'}>
+                              {(Number(calculatedScore) - uni.minScore).toFixed(2)}
+                            </span>
+                          ) : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                            ${passed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {passed ? 'Aprovado' : 'Reprovado'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
