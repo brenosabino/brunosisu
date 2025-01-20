@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Calculator, MapPin, School, Loader2, RefreshCw } from 'lucide-react';
 import { SisuApiService, UniversityData } from './services/sisuApi';
 import { getUniversities, saveUniversities } from './services/supabase';
+import { ChatBot } from './components/ChatBot';
+import { PasswordProtection } from './components/PasswordProtection';
 
 // Type for scores
 type Scores = {
-  linguagens: string;
-  humanas: string;
-  natureza: string;
-  matematica: string;
-  redacao: string;
+  linguagens: number;
+  humanas: number;
+  natureza: number;
+  matematica: number;
+  redacao: number;
 };
 
 // Get saved scores from localStorage
@@ -23,11 +25,11 @@ const getSavedScores = (): Scores => {
     }
   }
   return {
-    linguagens: '',
-    humanas: '',
-    natureza: '',
-    matematica: '',
-    redacao: ''
+    linguagens: 0,
+    humanas: 0,
+    natureza: 0,
+    matematica: 0,
+    redacao: 0
   };
 };
 
@@ -58,6 +60,10 @@ function App() {
     'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
     'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
   ];
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // You should move this to an environment variable in a real application
+  const correctPassword = import.meta.env.VITE_APP_PASSWORD || 'your-secure-password';
 
   useEffect(() => {
     fetchUniversities();
@@ -106,11 +112,11 @@ function App() {
 
   const handleScoreChange = (field: keyof Scores, value: string) => {
     if (value === '') {
-      setScores(prev => ({ ...prev, [field]: '' }));
+      setScores(prev => ({ ...prev, [field]: 0 }));
       return;
     }
     const numValue = Math.min(1000, Math.max(0, Number(value)));
-    setScores(prev => ({ ...prev, [field]: numValue.toString() }));
+    setScores(prev => ({ ...prev, [field]: numValue }));
   };
 
   const togglePreferredState = (state: string) => {
@@ -123,7 +129,7 @@ function App() {
 
   const calculateWeightedScore = (university: UniversityData) => {
     // Check if any score is empty
-    const hasEmptyScores = Object.values(scores).some(score => score === '');
+    const hasEmptyScores = Object.values(scores).some(score => score === 0);
     if (hasEmptyScores) {
       return '-';
     }
@@ -131,11 +137,11 @@ function App() {
     const weightSum = Object.values(university.weight).reduce((a, b) => a + b, 0);
     
     const weightedSum = 
-      Number(scores.linguagens) * university.weight.linguagens +
-      Number(scores.humanas) * university.weight.humanas +
-      Number(scores.natureza) * university.weight.natureza +
-      Number(scores.matematica) * university.weight.matematica +
-      Number(scores.redacao) * university.weight.redacao;
+      scores.linguagens * university.weight.linguagens +
+      scores.humanas * university.weight.humanas +
+      scores.natureza * university.weight.natureza +
+      scores.matematica * university.weight.matematica +
+      scores.redacao * university.weight.redacao;
     
     return (weightedSum / weightSum).toFixed(2);
   };
@@ -173,6 +179,15 @@ function App() {
     return 0;
   });
 
+  if (!isAuthenticated) {
+    return (
+      <PasswordProtection
+        onAuthenticate={() => setIsAuthenticated(true)}
+        correctPassword={correctPassword}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-blue-600 text-white p-4 shadow-lg">
@@ -192,7 +207,7 @@ function App() {
         </div>
       </header>
 
-      <main className="container mx-auto p-4">
+      <main className="flex-1 container mx-auto p-4">
         <div className="grid md:grid-cols-2 gap-6">
           <section className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -328,6 +343,8 @@ function App() {
           )}
         </section>
       </main>
+
+      <ChatBot universities={universities} scores={scores} />
     </div>
   );
 }
