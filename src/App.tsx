@@ -143,27 +143,14 @@ function App() {
   const sortedUniversities = [...universities].sort((a, b) => {
     const aScore = calculateWeightedScore(a);
     const bScore = calculateWeightedScore(b);
-    const aPreferred = preferredStates.includes(a.state);
-    const bPreferred = preferredStates.includes(b.state);
     const aPassed = aScore !== '-' && Number(aScore) >= a.minScore;
     const bPassed = bScore !== '-' && Number(bScore) >= b.minScore;
     
-    // First sort by preferred state
-    if (aPreferred && !bPreferred) return -1;
-    if (!aPreferred && bPreferred) return 1;
-    
-    // Then sort by approval status
+    // First sort by approval status
     if (aPassed && !bPassed) return -1;
     if (!aPassed && bPassed) return 1;
     
-    // If both are approved or both are not approved, sort by state
-    if (aPreferred && bPreferred) {
-      if (a.state !== b.state) {
-        return a.state.localeCompare(b.state);
-      }
-    }
-    
-    // Finally sort by delta (difference between calculated score and min score)
+    // Then sort by delta (difference between calculated score and min score)
     if (aScore !== '-' && bScore !== '-') {
       const aDelta = Number(aScore) - a.minScore;
       const bDelta = Number(bScore) - b.minScore;
@@ -293,9 +280,10 @@ function App() {
                   {sortedUniversities.map((uni) => {
                     const calculatedScore = calculateWeightedScore(uni);
                     const passed = calculatedScore !== '-' && Number(calculatedScore) >= uni.minScore;
+                    const isPreferred = preferredStates.includes(uni.state);
                     
                     return (
-                      <tr key={`${uni.shortName}-${uni.city}`}>
+                      <tr key={`${uni.shortName}-${uni.city}`} className={isPreferred ? 'bg-blue-50' : ''}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="font-medium text-gray-900">{uni.shortName}</div>
