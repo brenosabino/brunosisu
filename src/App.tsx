@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Calculator, MapPin, School, Loader2, RefreshCw } from 'lucide-react';
-import { SisuApiService, UniversityData } from './services/sisuApi';
-import { getUniversities, saveUniversities } from './services/supabase';
-import { ChatBot } from './components/ChatBot';
-import { PasswordProtection } from './components/PasswordProtection';
+import { UniversityData } from './services/sisuApi';
+import { getUniversities } from './services/supabase';
 
 // Type for scores
 type Scores = {
@@ -60,10 +58,6 @@ function App() {
     'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
     'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
   ];
-
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // You should move this to an environment variable in a real application
-  const correctPassword = import.meta.env.VITE_APP_PASSWORD || 'your-secure-password';
 
   useEffect(() => {
     fetchUniversities();
@@ -178,15 +172,6 @@ function App() {
     
     return 0;
   });
-
-  if (!isAuthenticated) {
-    return (
-      <PasswordProtection
-        onAuthenticate={() => setIsAuthenticated(true)}
-        correctPassword={correctPassword}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -343,11 +328,6 @@ function App() {
           )}
         </section>
       </main>
-
-      <ChatBot 
-        universities={universities} 
-        scores={Object.values(scores).every(score => score !== '') ? scores as { [K in keyof Scores]: number } : undefined}
-      />
     </div>
   );
 }
