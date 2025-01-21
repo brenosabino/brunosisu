@@ -33,6 +33,8 @@ const getSavedScores = (): Scores => {
 
 function App() {
   const [scores, setScores] = useState<Scores>(getSavedScores());
+  const [isScoresVisible, setIsScoresVisible] = useState(true);
+  const [isStatesVisible, setIsStatesVisible] = useState(true);
 
   const [preferredStates, setPreferredStates] = useState<string[]>(() => {
     const saved = localStorage.getItem('preferredStates');
@@ -109,7 +111,8 @@ function App() {
       setScores(prev => ({ ...prev, [field]: '' }));
       return;
     }
-    const numValue = Math.min(1000, Math.max(0, Number(value)));
+    // Round to 1 decimal place and ensure it's within bounds
+    const numValue = Math.min(1000, Math.max(0, Math.round(Number(value) * 10) / 10));
     setScores(prev => ({ ...prev, [field]: numValue }));
   };
 
@@ -162,74 +165,92 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-blue-600 text-white p-4 shadow-lg">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <School className="w-8 h-8" />
-            <h1 className="text-2xl font-bold">SISU Bruno Medicina</h1>
+      <header className="bg-blue-600 text-white shadow-lg">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-2">
+              <School className="w-8 h-8" />
+              <h1 className="text-2xl font-bold">SISU Bruno Medicina</h1>
+            </div>
+            <div className="flex gap-2">
+              <div className="relative">
+                <button 
+                  onClick={() => setIsScoresVisible(prev => !prev)}
+                  className={`px-4 py-2 rounded-lg transition-colors ${isScoresVisible ? 'bg-white text-blue-600' : 'bg-blue-500 text-white hover:bg-blue-400'}`}
+                >
+                  Minhas notas
+                </button>
+                {isScoresVisible && (
+                  <>
+                    <div 
+                      className="fixed inset-0 bg-transparent" 
+                      onClick={() => setIsScoresVisible(false)}
+                    />
+                    <div className="absolute right-0 z-10 mt-2 w-96 bg-white rounded-lg shadow-lg p-6 text-gray-900">
+                      <div className="space-y-4">
+                        {Object.entries(scores).map(([field, value]) => (
+                          <div key={field}>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {field.charAt(0).toUpperCase() + field.slice(1)}
+                            </label>
+                            <input
+                              type="number"
+                              value={value}
+                              onChange={(e) => handleScoreChange(field as keyof Scores, e.target.value)}
+                              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              min="0"
+                              max="1000"
+                              step="0.1"
+                              placeholder="Digite sua nota aqui"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="relative">
+                <button 
+                  onClick={() => setIsStatesVisible(prev => !prev)}
+                  className={`px-4 py-2 rounded-lg transition-colors ${isStatesVisible ? 'bg-white text-blue-600' : 'bg-blue-500 text-white hover:bg-blue-400'}`}
+                >
+                  Estados preferidos
+                </button>
+                {isStatesVisible && (
+                  <>
+                    <div 
+                      className="fixed inset-0 bg-transparent" 
+                      onClick={() => setIsStatesVisible(false)}
+                    />
+                    <div className="absolute right-0 z-10 mt-2 w-96 bg-white rounded-lg shadow-lg p-6">
+                      <div className="grid grid-cols-4 gap-2">
+                        {ESTADOS_BR.map(state => (
+                          <button
+                            key={state}
+                            onClick={() => togglePreferredState(state)}
+                            className={`p-2 rounded text-sm font-medium transition-colors
+                              ${preferredStates.includes(state)
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                          >
+                            {state}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
-          {/* <button
-            onClick={refreshData}
-            disabled={refreshing || loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-300 rounded-lg transition-colors"
-          >
-            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Atualizando...' : 'Atualizar Dados'}
-          </button> */}
         </div>
       </header>
 
       <main className="flex-1 container mx-auto p-4">
-        <div className="grid md:grid-cols-2 gap-6">
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Calculator className="w-5 h-5" />
-              Suas Notas
-            </h2>
-            <div className="space-y-4">
-              {Object.entries(scores).map(([field, value]) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {field.charAt(0).toUpperCase() + field.slice(1)}
-                  </label>
-                  <input
-                    type="number"
-                    value={value}
-                    onChange={(e) => handleScoreChange(field as keyof Scores, e.target.value)}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    min="0"
-                    max="1000"
-                    placeholder="Digite sua nota aqui"
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Estados Preferidos
-            </h2>
-            <div className="grid grid-cols-4 gap-2">
-              {ESTADOS_BR.map(state => (
-                <button
-                  key={state}
-                  onClick={() => togglePreferredState(state)}
-                  className={`p-2 rounded text-sm font-medium transition-colors
-                    ${preferredStates.includes(state)
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                >
-                  {state}
-                </button>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <section className="mt-8 bg-white p-6 rounded-lg shadow-md">
+        <section className="mt-4 bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Resultado por Universidade</h2>
           
           {loading ? (
